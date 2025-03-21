@@ -1,7 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
-
+import meImage from '../assets/me.jpeg';
 import "../styles/global.css";
+import Image from 'astro/components/Image.astro';
+import github from '../assets/social/github.svg';
+import x from '../assets/social/x.svg';
+import linkedin from '../assets/social/linkedin.svg';
+import mail from '../assets/social/mail.svg';
 ---
 
 <Layout>
@@ -10,8 +15,27 @@ import "../styles/global.css";
 		<div class="wave-grid absolute inset-0 z-0"></div>
 		
 		<!-- Content -->
-		<div class="relative mx-auto my-auto">
+		<div class="relative z-10 flex flex-col items-center justify-center h-screen">
+			<div class="profile-image mb-4 rounded-full w-28 h-28 overflow-hidden border-2 border-gray-300">
+				<Image src={meImage} alt="Alex McLean" class="w-full h-full object-cover" style="transform: scale(1.20);" />
+			</div>
 			<div class="text-4xl font-bold">Alex McLean</div>
+			<div class="flex flex-row gap-4 mt-4">
+				<a href="https://github.com/mclean25">
+					<Image src={github} alt="Github" class="w-6 h-6" />
+				</a>
+				<a href="https://x.com/amclean25">
+					<Image src={x} alt="X" class="w-6 h-6" />
+				</a>
+				<a href="https://www.linkedin.com/in/alexmclean25/">
+					<Image src={linkedin} alt="LinkedIn" class="w-6 h-6" />
+				</a>
+				<a href="mailto:alex.mclean25@gmail.com">
+					<Image src={mail} alt="Mail" class="w-6 h-6" />
+				</a>
+			</div>
+
+			
 		</div>
 	</div>
 
