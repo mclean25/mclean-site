@@ -1,125 +1,45 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import meImage from '../assets/me.jpeg';
+import Layout from "../layouts/Layout.astro";
+import meImage from "../assets/me.jpeg";
 import "../styles/global.css";
-import Image from 'astro/components/Image.astro';
-import github from '../assets/social/github.svg';
-import x from '../assets/social/x.svg';
-import linkedin from '../assets/social/linkedin.svg';
-import mail from '../assets/social/mail.svg';
+import Image from "astro/components/Image.astro";
+import github from "../assets/social/github.svg";
+import x from "../assets/social/x.svg";
+import linkedin from "../assets/social/linkedin.svg";
+import mail from "../assets/social/mail.svg";
 ---
 
 <Layout>
-	<div class="flex flex-col min-h-screen relative overflow-hidden">
-		<!-- Animated dot grid background -->
-		<div class="wave-grid absolute inset-0 z-0"></div>
-		
-		<!-- Content -->
-		<div class="relative z-10 flex flex-col items-center justify-center h-screen">
-			<div class="profile-image mb-4 rounded-full w-28 h-28 overflow-hidden border-2 border-gray-300">
-				<Image src={meImage} alt="Alex McLean" class="w-full h-full object-cover" style="transform: scale(1.20);" />
-			</div>
-			<div class="text-4xl font-bold">Alex McLean</div>
-			<div class="flex flex-row gap-4 mt-4">
-				<a href="https://github.com/mclean25">
-					<Image src={github} alt="Github" class="w-6 h-6" />
-				</a>
-				<a href="https://x.com/amclean25">
-					<Image src={x} alt="X" class="w-6 h-6" />
-				</a>
-				<a href="https://www.linkedin.com/in/alexmclean25/">
-					<Image src={linkedin} alt="LinkedIn" class="w-6 h-6" />
-				</a>
-				<a href="mailto:alex.mclean25@gmail.com">
-					<Image src={mail} alt="Mail" class="w-6 h-6" />
-				</a>
-			</div>
-		</div>
-	</div>
-
-	<style>
-		html, body {
-			height: 100%;
-			margin: 0;
-			padding: 0;
-		}
-		
-		.wave-grid {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100vh;
-			background-color: white;
-		}
-
-		/* Create the dot grid using a background pattern */
-		.wave-grid::before {
-			content: "";
-			position: absolute;
-			top: -100px;
-			left: -100px;
-			right: -100px;
-			bottom: -100px;
-			background-image: radial-gradient(circle, #c3c6ca 1.2px, transparent 1px);
-			background-size: 24px 24px;
-			animation: wave1 25s ease-in-out infinite;
-		}
-
-		/* Add a second layer of dots with different animation timing */
-		.wave-grid::after {
-			content: "";
-			position: absolute;
-			top: -100px;
-			left: -100px;
-			right: -100px;
-			bottom: -100px;
-			background-image: radial-gradient(circle, #b9bdc2 0.8px, transparent 0.8px);
-			background-size: 24px 24px;
-			animation: wave2 30s ease-in-out infinite;
-			animation-delay: -8s; /* Offset timing for more natural wave effect */
-			opacity: 0.7;
-		}
-
-		/* First wave animation */
-		@keyframes wave1 {
-			0% {
-				transform: translateX(0px) translateY(0px) skew(0deg, 0deg);
-			}
-			20% {
-				transform: translateX(-14px) translateY(10px) skew(1.5deg, 0.7deg);
-			}
-			40% {
-				transform: translateX(12px) translateY(4px) skew(-1deg, 0.2deg);
-			}
-			60% {
-				transform: translateX(-8px) translateY(-14px) skew(0.8deg, -0.8deg);
-			}
-			80% {
-				transform: translateX(16px) translateY(-6px) skew(-1.5deg, 0.5deg);
-			}
-			100% {
-				transform: translateX(0px) translateY(0px) skew(0deg, 0deg);
-			}
-		}
-
-		/* Second wave animation with different movement pattern */
-		@keyframes wave2 {
-			0% {
-				transform: translateX(0px) translateY(0px) skew(0deg, 0deg);
-			}
-			25% {
-				transform: translateX(15px) translateY(-8px) skew(-1.2deg, 0.5deg);
-			}
-			50% {
-				transform: translateX(-12px) translateY(12px) skew(1.5deg, -0.8deg);
-			}
-			75% {
-				transform: translateX(7px) translateY(-10px) skew(-0.8deg, 0.3deg);
-			}
-			100% {
-				transform: translateX(0px) translateY(0px) skew(0deg, 0deg);
-			}
-		}
-	</style>
+  <div class="flex flex-col min-h-screen relative overflow-hidden">
+    <!-- Content -->
+    <div
+      class="relative z-10 flex flex-col items-center justify-center h-screen"
+    >
+      <div
+        class="profile-image mb-4 rounded-full w-28 h-28 overflow-hidden border-2 border-gray-300"
+      >
+        <Image
+          src={meImage}
+          alt="Alex McLean"
+          class="w-full h-full object-cover"
+          style="transform: scale(1.20);"
+        />
+      </div>
+      <div class="text-4xl font-bold">Alex McLean</div>
+      <div class="flex flex-row gap-4 mt-4">
+        <a href="https://github.com/mclean25">
+          <Image src={github} alt="Github" class="w-6 h-6" />
+        </a>
+        <a href="https://x.com/amclean25">
+          <Image src={x} alt="X" class="w-6 h-6" />
+        </a>
+        <a href="https://www.linkedin.com/in/alexmclean25/">
+          <Image src={linkedin} alt="LinkedIn" class="w-6 h-6" />
+        </a>
+        <a href="mailto:alex.mclean25@gmail.com">
+          <Image src={mail} alt="Mail" class="w-6 h-6" />
+        </a>
+      </div>
+    </div>
+  </div>
 </Layout>
