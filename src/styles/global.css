@@ -1,1 +1,6 @@
 @import "tailwindcss";
+@import "./fonts.css";
+
+@theme inline {
+    --font-sans: "ebgaramond", sans-serif;
+}
