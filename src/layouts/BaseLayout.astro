@@ -18,7 +18,7 @@ import "../styles/global.css";
       <div class="w-60 p-4 fixed h-screen">
         <div class="flex flex-col h-full justify-between">
           <div class="flex flex-col gap-2">
-            <h1>Alex McLean</h1>
+            <h1 class="font-oswald lowercase text-2xl">Alex McLean</h1>
             <div class="flex text-sm flex-col gap-0 underline text-gray-700 lowercase">
               <a href="/about">About</a>
               <a href="/posts">Posts</a>
@@ -37,8 +37,8 @@ import "../styles/global.css";
       </div>
       <!-- Content area with margin-left to account for fixed navbar -->
       <div class="ml-60 flex-1 p-4 pr-12 max-w-3xl">
-          <h2 class="text-lg text-gray-500 font-bold mb-1">{title}</h2>
-          <div class="mt-18">
+          <h2 class="text-3xl font-bold mb-1 font-oswald">{title}</h2>
+          <div class="mt-18 pb-12">
             <slot />
           </div>
       </div>

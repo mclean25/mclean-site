@@ -1,103 +1,32 @@
 @font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-Regular.ttf");
+  font-family: "oswald";
+  src: url("/fonts/Oswald-Regular.ttf");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-Italic.ttf");
-  font-weight: 400;
-  font-style: italic;
+  font-family: "oswald";
+  src: url("/fonts/Oswald-Bold.ttf");
+  font-weight: 700;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-Medium.ttf");
+  font-family: "oswald";
+  src: url("/fonts/Oswald-Medium.ttf");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-MediumItalic.ttf");
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-SemiBold.ttf");
+  font-family: "oswald";
+  src: url("/fonts/Oswald-SemiBold.ttf");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-SemiBoldItalic.ttf");
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-Bold.ttf");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-BoldItalic.ttf");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-ExtraBold.ttf");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ebgaramond";
-  src: url("/fonts/EBGaramond-ExtraBoldItalic.ttf");
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "notosans";
-  src: url("/fonts/NotoSans-Regular.ttf");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "notosans";
-  src: url("/fonts/NotoSans-Bold.ttf");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "notosans";
-  src: url("/fonts/NotoSans-SemiBold.ttf");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}

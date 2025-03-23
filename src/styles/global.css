@@ -1,8 +1,7 @@
 @import "tailwindcss";
-
-/* @import "./fonts.css"; */
+@plugin '@tailwindcss/typography';
+@import "./fonts.css";
 
 @theme inline {
-  /* --font-sans: "ebgaramond", sans-serif;
-  --font-notosans: "notosans", sans-serif; */
+  --font-oswald: "oswald", sans-serif;
 }

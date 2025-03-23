@@ -5,6 +5,7 @@ const posts = await getCollection("posts");
 const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
+
 <BaseLayout title="Posts">
   <div class="flex flex-col">
       <ul class="flex flex-col gap-2">
@@ -24,3 +25,9 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
   </div>
 
 </BaseLayout>
+
+<style>
+    h2 {
+        color: red;
+    }
+</style>
