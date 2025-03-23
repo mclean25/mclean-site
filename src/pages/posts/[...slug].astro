@@ -19,7 +19,9 @@ const { Content } = await render(post);
 ---
 
 <BaseLayout {...post.data}>
-  <Prose>
-    <Content />
-  </Prose>
+  <div class="min-h-[calc(100vh-8rem)] w-full max-w-full overflow-hidden">
+    <Prose>
+      <Content />
+    </Prose>
+  </div>
 </BaseLayout>

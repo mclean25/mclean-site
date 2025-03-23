@@ -32,6 +32,9 @@ body {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+  overflow-x: hidden;
+  width: 100%;
+  overflow-y: auto;
 }
 
 /* Add icon to links that open in new tabs */
@@ -112,8 +115,31 @@ a {
 
 .prose .astro-code {
   background-color: transparent;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .prose .astro-code code {
   background-color: transparent;
+  white-space: pre;
+}
+
+.prose pre {
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+
+/* Special handling for code blocks */
+.prose pre code {
+  overflow-x: auto;
+  white-space: pre;
+  width: 100%;
+  display: block;
+}
+
+/* Special handling for inline code */
+.prose :not(pre) > code {
+  white-space: normal;
+  word-break: break-word;
 }

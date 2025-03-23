@@ -5,11 +5,34 @@
 <!-- This is mostly here just so that tailwind will work for the markdown content. 
  Preferable to use global.css instead -->
 <div
-  class="prose max-w-none
+  class="prose
   prose-h2:font-bold prose-h2:text-xl
   prose-a:text-blue-600 dark:prose-a:text-blue-400
   prose-p:text-justify
-  prose-img:rounded-xl"
+  prose-img:rounded-xl
+  text-base"
 >
   <slot />
 </div>
+
+<style>
+  .prose {
+    max-width: 100% !important;
+  }
+  
+  .prose pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Override any Tailwind prose styles that might be causing issues */
+  :global(.prose p) {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  :global(.prose *) {
+    max-width: 100%;
+  }
+</style>
