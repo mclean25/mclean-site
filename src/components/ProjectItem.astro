@@ -1,0 +1,16 @@
+---
+interface Props {
+  title: string;
+  url: string;
+  description: string;
+}
+
+const { title, url, description } = Astro.props;
+---
+
+<li>
+  <div class="flex flex-col">
+    <a target="_blank" href={url} class="font-bold hover:underline">{title}</a>
+    <span>{description}</span>
+  </div>
+</li>
