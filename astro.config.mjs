@@ -7,6 +7,9 @@ import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
 export default defineConfig({
+  redirects: {
+    "/": "/about",
+  },
   vite: {
     plugins: [tailwindcss(), mdx(), sitemap()],
   },
