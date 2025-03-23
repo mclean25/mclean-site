@@ -22,6 +22,7 @@ would on our host, this enables us to dockerize our development environment.
 
 A few of the reasons I'm very much in favour of dockerizing the dev environment
 are:
+
 - **Development is off the host**: Accidently mess something up in your
   development environment? Just re-build the container and your good to go.
 - **Instant setup for new users**: Chances are you have worked on a project with
@@ -38,8 +39,7 @@ are:
   commonly used dev container configurations; You don't need to build yours from
   scratch. All you need to do to get started is tell VS Code you want to create
   a development environment and it will walk you through which services you want
-  to create. 
-
+  to create.
 
 ## Porting shell config over
 
@@ -53,20 +53,24 @@ wanted to do was have my shell and it's plugins ported over to the dev container
 so that it looks and acts similarily to how it does on my host:
 
 ##### Default VS Code terminal shell (in dev container)
+
 ![Original Terminal config](./original-devcontainer-terminal.png)
 
 ##### Zsh shell used on local MacOS
+
 ![Local Terminal](./local-terminal.png)
 
 ##### End result with ported shell config
+
 ![Dev container with zsh shell](./dev-container-with-zsh-image.png)
 
 ## Getting Started
 
 In order to get our configuration over into the dev container, we need to:
+
 1. Install the shell of preference (I'm doing zsh here) into the container
 2. Copy over any configuration files we want into the container so that
-the shell (zsh) installation in the container can use them.
+   the shell (zsh) installation in the container can use them.
 
 In order to do this, we're going to take use the `initializeCommand` and
 `postCreateCommand` options in `devcontainer.json` in order to execute a few
@@ -75,6 +79,7 @@ things we want before and after the dev container is built.
 Add the following to your `devcontainer.json` file:
 
 ###### ` .devcontainer/devcontainer.json`
+
 ```json
   //...
   "initializeCommand":
@@ -101,6 +106,7 @@ file that will be ignored by source control and then edited locally for each
 user's usecase.
 
 ###### `.devcontainer/config.example.sh`
+
 ```bash
 #!/bin/bash
 
@@ -130,6 +136,7 @@ install_cmds() {
 ```
 
 ## Pre-build Script
+
 This script will run before VS Code builds your dev container. The following
 script will copy any of the files you want to use in your dev container from
 your host to the workspace directory, so that you can then access them once
@@ -138,6 +145,7 @@ because only the workspace is ported over to the container once VS Code calls
 Docker to build the container.
 
 ###### `.devcontainer/pre-build-script.sh`
+
 ```bash
 #!/bin/bash
 
@@ -167,10 +175,10 @@ move_to_workspace()
     echo "Copying ${full_path} to ./${temp_config_dir}/"
 
     if [ -d "${full_path}" ]
-        then cp -aR "${full_path}" "./${temp_config_dir}/${path}" 
+        then cp -aR "${full_path}" "./${temp_config_dir}/${path}"
             \ || echo "error copying folder ${full_path}"
     elif [ -f "${full_path}" ]
-        then cp "${full_path}" "./${temp_config_dir}/${path}" 
+        then cp "${full_path}" "./${temp_config_dir}/${path}"
             \ || echo "error copying file ${full_path}"
     else echo "${full_path} is not valid";
         exit 1
@@ -184,11 +192,13 @@ done
 ```
 
 ## Post-build Script
+
 Now that the container is built, we want to move the files that were located in
 our `$HOME` directory on our host to the `$HOME` directory on the container so
 that our shells/frameworks can use them.
 
 ###### `.devcontainer/post-build-script.sh`
+
 ```bash
 #!/bin/bash
 
@@ -211,10 +221,10 @@ move_to_home()
     full_path="${WORKSPACE_TEMP_CONFIG_DIR}"/"${path}"
 
     if [ -d "${full_path}" ]
-        then cp -aR "${full_path}" "${HOME_DIR}"/"${path}" 
+        then cp -aR "${full_path}" "${HOME_DIR}"/"${path}"
             \ || echo "error copying file ${full_path}"
     elif [ -f "${full_path}" ]
-        then cp "${full_path}" "${HOME_DIR}"/"${path}" 
+        then cp "${full_path}" "${HOME_DIR}"/"${path}"
             \ || echo "error copying folder ${full_path}"
     else echo "\"${full_path}\" is not valid";
         exit 1
@@ -242,4 +252,3 @@ the shell (eg: typing `zsh`), or your can set the
 `devcontainer.json`. For example, I have mine set to `"zsh"`.
 
 ![Dev container with zsh shell](./dev-container-with-zsh-image.png)
-

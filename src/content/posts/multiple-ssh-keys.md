@@ -6,6 +6,7 @@ description: "How to configure using mutliple SSH keys on one machine"
 ---
 
 ## Intro
+
 What I imagine a fairly common scenario for many git users is the need to use
 different ssh keys when dealing with different repositories on your machine. I
 ran into a few difficulties when I needed to do this to be able to use git for
@@ -13,6 +14,7 @@ both personal and work accounts on the same machine so I thought I would share
 what worked for me here.
 
 ## Naming your ssh keys
+
 When creating your ssh keys, I recommend saving them with more descriptive names
 than the usual `id_ed25519` or whatever the default is for the type of key
 you're creating. if you've already created them, you can simply just rename the
@@ -20,10 +22,12 @@ files afterwards; just make sure the `.pub` and private names match (eg:
 `work_key.pub` & `work_key`).
 
 ## Setting up your config
+
 Now that you have both of your keys named to something obvious, you'll want to
 add a new file in your `~/.ssh/` directory called `config`:
 
 ###### ` ~/.ssh/config`
+
 ```py
 Host *
     # yes if keys should be added to ssh agent
@@ -63,9 +67,11 @@ that the host for GitLab is normally `gitlab.com`, but I've post-fixed it with
 use one key or the other.
 
 ## Cloning repositories
+
 Now when I clone something from GitLab, instead of:
 
     git clone git@gitlab.com:${username}/${project-slug}
+
 I'd do:
 
     git clone git@gitlab.com-work:${username}/${project-slug}
@@ -75,6 +81,7 @@ For my GitHub repositories, I don't need to change anything:
     git clone git@github.com:${username}/${project-slug}
 
 ## Setting up existing repositories
+
 If you've already cloned some repositories and are just setting this up now, you
 can simply edit the `.git/config` file within the repository to get the desired
 effect. Open the `.git/config` file with your editor and change the url variable
