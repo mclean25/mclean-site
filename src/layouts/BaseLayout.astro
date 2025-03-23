@@ -1,5 +1,5 @@
 ---
-const {title} = Astro.props;
+const { title } = Astro.props;
 import "../styles/global.css";
 ---
 
@@ -19,28 +19,30 @@ import "../styles/global.css";
         <div class="flex flex-col h-full justify-between">
           <div class="flex flex-col gap-2">
             <h1 class="font-oswald lowercase text-2xl">Alex McLean</h1>
-            <div class="flex text-sm flex-col gap-0 underline text-gray-700 lowercase">
+            <div
+              class="flex text-sm flex-col gap-0 underline text-gray-700 lowercase"
+            >
               <a href="/about">About</a>
               <a href="/posts">Posts</a>
               <a href="/projects">Projects</a>
               <a href="/contact">Contact</a>
             </div>
           </div>
-          
+
           <div class="flex text-sm flex-col gap-0 underline text-gray-700">
-            <a href="/">github</a>
-            <a href="/">x</a>
-            <a href="/">email</a>
-            <a href="/">linkedin</a>
+            <a target="_blank" href="/">github</a>
+            <a target="_blank" href="/">x</a>
+            <a target="_blank" href="/">email</a>
+            <a target="_blank" href="/">linkedin</a>
           </div>
         </div>
       </div>
       <!-- Content area with margin-left to account for fixed navbar -->
       <div class="ml-60 flex-1 p-4 pr-12 max-w-3xl">
-          <h2 class="text-3xl font-bold mb-1 font-oswald">{title}</h2>
-          <div class="mt-18 pb-12">
-            <slot />
-          </div>
+        <h2 class="text-3xl font-bold mb-1 font-oswald">{title}</h2>
+        <div class="mt-18 pb-12">
+          <slot />
+        </div>
       </div>
     </div>
   </body>

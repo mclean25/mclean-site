@@ -5,3 +5,15 @@
 @theme inline {
   --font-oswald: "oswald", sans-serif;
 }
+
+/* Add icon to links that open in new tabs */
+a[target="_blank"]::after {
+  content: " ↗";
+  display: inline-block;
+  font-size: 0.8em;
+  vertical-align: super;
+}
+
+a {
+  text-decoration: underline;
+}
