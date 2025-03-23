@@ -14,11 +14,14 @@ import ThemeToggle from "../components/ThemeToggle.astro";
     <title>{title}</title>
     <script is:inline>
       // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-      if (localStorage.getItem('theme') === 'dark' || 
-          (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
+      if (
+        localStorage.getItem("theme") === "dark" ||
+        (!localStorage.getItem("theme") &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
       } else {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.remove("dark");
       }
     </script>
   </head>
@@ -32,9 +35,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
               <h1 class="font-oswald lowercase text-2xl">Alex McLean</h1>
               <ThemeToggle />
             </div>
-            <div
-              class="flex text-sm flex-col gap-0 underline lowercase"
-            >
+            <div class="flex text-sm flex-col gap-0 underline lowercase">
               <a href="/about">About</a>
               <a href="/posts">Posts</a>
               <a href="/projects">Projects</a>
@@ -46,7 +47,9 @@ import ThemeToggle from "../components/ThemeToggle.astro";
             <a target="_blank" href="https://github.com/mclean25">github</a>
             <a target="_blank" href="https://x.com/amclean25">x</a>
             <a target="_blank" href="mailto:alex.mclean25@gmail.com">email</a>
-            <a target="_blank" href="https://www.linkedin.com/in/alexmclean25/">linkedin</a>
+            <a target="_blank" href="https://www.linkedin.com/in/alexmclean25/"
+              >linkedin</a
+            >
           </div>
         </div>
       </div>
