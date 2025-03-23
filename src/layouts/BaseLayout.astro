@@ -28,7 +28,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
   <body>
     <div class="flex h-screen">
       <!-- Mobile hamburger menu button -->
-      <div id="hamburger-menu-container" class="fixed z-50 md:hidden w-full backdrop-blur-md bg-black/30">
+      <div id="hamburger-menu-container" class="fixed z-50 md:hidden w-full backdrop-blur-md">
         <button id="hamburger-menu" class="pt-4 pl-4">
           <!-- Hamburger icon (shown when menu is closed) -->
           <svg
@@ -161,5 +161,9 @@ import ThemeToggle from "../components/ThemeToggle.astro";
   .sidebar {
     background-color: var(--bg-color);
     transition: background-color 0.3s ease;
+  }
+
+  #hamburger-menu-container {
+    background-color: rgb(var(--bg-color) / 0.3);
   }
 </style>
