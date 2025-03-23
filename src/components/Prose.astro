@@ -3,12 +3,15 @@
 ---
 
 <div
-  class="prose
+  class="prose max-w-none
   prose-h2:font-bold prose-h2:text-xl
-  prose-a:text-blue-600
+  prose-a:text-blue-600 dark:prose-a:text-blue-400
   prose-p:text-justify
-  prose-code:bg-gray-100 prose-code:p-1 prose-code:text-[#EB5757] prose-code:before:content-none prose-code:after:content-none
-  prose-pre:bg-gray-100 prose-pre:text-black prose-pre:rounded-lg
+  prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:p-1 
+  prose-code:text-[#EB5757] dark:prose-code:text-[#FF6B6B] 
+  prose-code:before:content-none prose-code:after:content-none
+  prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800 
+  prose-pre:text-black dark:prose-pre:text-white prose-pre:rounded-lg
   [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-current
   [&_.astro-code_code]:bg-transparent [&_.astro-code_code]:p-0 [&_.astro-code_code]:text-current
   prose-img:rounded-xl"

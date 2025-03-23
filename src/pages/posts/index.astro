@@ -15,7 +15,7 @@ const sortedPosts = posts.sort(
           <li>
             <a href={`/posts/${post.id}`}>
               <div>{post.data.title}</div>
-              <div class="text-gray-500">
+              <div class="text-gray-500 dark:text-gray-400">
                 {post.data.pubDate.toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -29,9 +29,3 @@ const sortedPosts = posts.sort(
     </ul>
   </div>
 </BaseLayout>
-
-<style>
-  h2 {
-    color: red;
-  }
-</style>

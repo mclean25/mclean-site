@@ -6,6 +6,26 @@
   --font-oswald: "oswald", sans-serif;
 }
 
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --text-muted: #6b7280;
+  --link-color: #000000;
+}
+
+.dark {
+  --bg-color: #121212;
+  --text-color: #f3f4f6;
+  --text-muted: #9ca3af;
+  --link-color: #f3f4f6;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Add icon to links that open in new tabs */
 a[target="_blank"]::after {
   content: " ↗";
@@ -16,4 +36,53 @@ a[target="_blank"]::after {
 
 a {
   text-decoration: underline;
+  color: var(--link-color);
+}
+
+.theme-toggle {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+/* Custom dark mode prose styles */
+.dark .prose {
+  color: var(--text-color);
+}
+
+.dark .prose p, 
+.dark .prose li, 
+.dark .prose h1, 
+.dark .prose h2, 
+.dark .prose h3, 
+.dark .prose h4, 
+.dark .prose h5, 
+.dark .prose h6,
+.dark .prose strong,
+.dark .prose blockquote {
+  color: var(--text-color);
+}
+
+.prose {
+  color: var(--text-color);
+}
+
+.prose p, 
+.prose li, 
+.prose h1, 
+.prose h2, 
+.prose h3, 
+.prose h4, 
+.prose h5, 
+.prose h6,
+.prose strong,
+.prose blockquote {
+  color: var(--text-color);
 }
