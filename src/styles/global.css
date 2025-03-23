@@ -12,8 +12,8 @@
   --text-muted: #6b7280;
   --link-color: #000000;
 
-  --inline-code-color: #EB5757;
-  --inline-code-background: #EDEDEB;
+  --inline-code-color: #eb5757;
+  --inline-code-background: #ededeb;
 }
 
 .dark {
@@ -22,7 +22,7 @@
   --text-muted: #9ca3af;
   --link-color: #f3f4f6;
 
-  --inline-code-color: #EB5757;
+  --inline-code-color: #eb5757;
   --inline-code-background: #292928;
 }
 
@@ -98,7 +98,6 @@ a {
 .prose p {
   text-align: justify;
 }
-
 
 .prose code {
   color: var(--inline-code-color);
