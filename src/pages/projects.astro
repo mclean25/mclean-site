@@ -1,42 +1,44 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import Prose from "../components/Prose.astro";
 import ProjectItem from "../components/ProjectItem.astro";
 
 const projects = [
   {
     title: "workoutintervals.com",
     url: "https://workoutintervals.com",
-    description: "A dead simple app I made for my fiancé that has configurable workout timers you can run"
+    description:
+      "A dead simple app I made for my fiancé that has configurable workout timers you can run",
   },
   {
     title: "Review Corral",
     url: "https://reviewcorral.com",
-    description: "A Slack & Github bot made to handle pull-request notifictions for small engineering teams much more efficiently"
+    description:
+      "A Slack & Github bot made to handle pull-request notifictions for small engineering teams much more efficiently",
   },
   {
     title: "Prioritizer",
     url: "https://apps.apple.com/us/app/prioritizer/id1507512481",
-    description: "A mobile app writting in Flutter with a special algorithm to help you priotize your tasks better"
-  }
+    description:
+      "A mobile app writting in Flutter with a special algorithm to help you priotize your tasks better",
+  },
 ];
 ---
 
 <BaseLayout title="Projects">
-  <Prose>
     <div class="flex flex-col">
       <div class="space-y-2">
         <p>Here's some personal projects I've worked on:</p>
         <ul class="space-y-4 mt-8">
-          {projects.map(project => (
-            <ProjectItem 
-              title={project.title}
-              url={project.url}
-              description={project.description}
-            />
-          ))}
+          {
+            projects.map((project) => (
+              <ProjectItem
+                title={project.title}
+                url={project.url}
+                description={project.description}
+              />
+            ))
+          }
         </ul>
       </div>
     </div>
-  </Prose>
 </BaseLayout>

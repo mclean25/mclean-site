@@ -5,7 +5,21 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        oswald: ["oswald", "sans-serif"],
+        oswald: "var(--font-oswald)",
+      },
+      colors: {
+        background: "var(--color-background)",
+        text: "var(--color-text)",
+        muted: "var(--color-text-muted)",
+        link: "var(--color-link)",
+      },
+      textColor: {
+        primary: "var(--color-text)",
+        secondary: "var(--color-text-muted)",
+        link: "var(--color-link)",
+      },
+      backgroundColor: {
+        primary: "var(--color-background)",
       },
     },
   },

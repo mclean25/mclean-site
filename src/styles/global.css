@@ -11,6 +11,9 @@
   --text-color: #000000;
   --text-muted: #6b7280;
   --link-color: #000000;
+
+  --inline-code-color: #EB5757;
+  --inline-code-background: #EDEDEB;
 }
 
 .dark {
@@ -18,6 +21,9 @@
   --text-color: #f3f4f6;
   --text-muted: #9ca3af;
   --link-color: #f3f4f6;
+
+  --inline-code-color: #EB5757;
+  --inline-code-background: #292928;
 }
 
 body {
@@ -87,4 +93,28 @@ a {
 .prose strong,
 .prose blockquote {
   color: var(--text-color);
+}
+
+.prose p {
+  text-align: justify;
+}
+
+
+.prose code {
+  color: var(--inline-code-color);
+  background-color: var(--inline-code-background);
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  &::before,
+  &::after {
+    content: none;
+  }
+}
+
+.prose .astro-code {
+  background-color: transparent;
+}
+
+.prose .astro-code code {
+  background-color: transparent;
 }
