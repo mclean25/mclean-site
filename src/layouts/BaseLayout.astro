@@ -28,26 +28,29 @@ import ThemeToggle from "../components/ThemeToggle.astro";
   <body>
     <div class="flex h-screen">
       <!-- Mobile hamburger menu button -->
-      <button id="hamburger-menu" class="fixed top-4 left-4 z-50 md:hidden">
-        <!-- Hamburger icon (shown when menu is closed) -->
-        <svg
-          id="menu-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="feather feather-menu"
-        >
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
+      <div id="hamburger-menu-container" class="fixed z-50 md:hidden w-full backdrop-blur-md bg-black/30">
+        <button id="hamburger-menu" class="pt-4 pl-4">
+          <!-- Hamburger icon (shown when menu is closed) -->
+          <svg
+            id="menu-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="feather feather-menu"
+          >
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+       </div>
+     
 
       <!-- Navbar - hidden on mobile by default -->
       <div
@@ -110,6 +113,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
   // Mobile menu toggle
   document.addEventListener("DOMContentLoaded", () => {
     const hamburgerMenu = document.getElementById("hamburger-menu");
+    const hamburgerMenuContainer = document.getElementById("hamburger-menu-container");
     const menuIcon = document.getElementById("menu-icon");
     const closeIcon = document.getElementById("close-icon");
     const sidebar = document.getElementById("sidebar");
@@ -118,6 +122,8 @@ import ThemeToggle from "../components/ThemeToggle.astro";
     hamburgerMenu?.addEventListener("click", () => {
       // Toggle sidebar
       sidebar?.classList.toggle("-translate-x-full");
+
+      hamburgerMenuContainer?.classList.toggle("hidden");
 
       // Toggle icons
       menuIcon?.classList.toggle("hidden");
@@ -132,6 +138,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
     // Close menu when clicking overlay
     overlay?.addEventListener("click", () => {
       sidebar?.classList.add("-translate-x-full");
+      hamburgerMenuContainer?.classList.remove("hidden");
       overlay?.classList.add("opacity-0");
       overlay?.classList.add("pointer-events-none");
       overlay?.classList.remove("opacity-50");
