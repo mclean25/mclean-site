@@ -12,6 +12,10 @@ import ThemeToggle from "../components/ThemeToggle.astro";
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    
+    <!-- Preload critical fonts to prevent FOUT -->
+    <link rel="preload" href="/fonts/Oswald-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/fonts/Oswald-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <script is:inline>
       // On page load or when changing themes, best to add inline in `head` to avoid FOUC
       if (
