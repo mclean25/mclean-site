@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.10",
     "@astrojs/mdx": "^4.2.1",
     "@astrojs/sitemap": "^3.3.0",
     "@tailwindcss/vite": "^4.0.15",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.16",
     "prettier": "3.5.3",
-    "prettier-plugin-astro": "0.14.1"
+    "prettier-plugin-astro": "0.14.1",
+    "wrangler": "^4.45.0"
   }
 }
