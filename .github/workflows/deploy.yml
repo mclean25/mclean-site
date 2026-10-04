@@ -29,7 +29,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:infra
+      - run: pnpm test:artifacts
       - run: pnpm deploy:prod --yes --no-input
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - run: pnpm deploy:artifacts --yes --no-input
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          ARTIFACT_UPLOAD_TOKEN: ${{ secrets.ARTIFACT_UPLOAD_TOKEN }}

@@ -1,10 +1,26 @@
 import { execFileSync, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 const accountId = "047bcbcd59993fa5786809f87ce770a0";
 const env = { ...process.env };
 
 try {
+  if (
+    process.argv.includes("infra/artifacts.run.ts") &&
+    !env.ARTIFACT_UPLOAD_TOKEN
+  ) {
+    const config = JSON.parse(
+      await readFile(
+        join(homedir(), ".config", "mclean-artifacts", "config.json"),
+        "utf8",
+      ),
+    );
+    if (!config.uploadToken)
+      throw new Error("The artifact upload credential is missing.");
+    env.ARTIFACT_UPLOAD_TOKEN = config.uploadToken;
+  }
   if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_ACCOUNT_ID !== accountId) {
     throw new Error(
       "This stack must deploy to the personal Cloudflare account.",
