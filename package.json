@@ -1,10 +1,20 @@
 {
   "name": "mclean-site",
   "type": "module",
+  "packageManager": "pnpm@10.30.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "check:infra": "tsc -p tsconfig.infra.json",
+    "plan": "pnpm build && node scripts/alchemy.mjs plan",
+    "deploy": "pnpm build && node scripts/alchemy.mjs deploy",
+    "plan:prod": "pnpm build && node scripts/alchemy.mjs plan --stage prod",
+    "deploy:prod": "pnpm build && node scripts/alchemy.mjs deploy --stage prod",
+    "plan:artifacts": "node scripts/alchemy.mjs plan infra/artifacts.run.ts --stage prod",
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write ."
@@ -18,10 +28,22 @@
     "sharp": "^0.33.5",
     "tailwindcss": "^4.3.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  },
   "devDependencies": {
+    "@effect/platform-node": "4.0.0",
     "@tailwindcss/typography": "^0.5.20",
+    "alchemy": "2.0.0-beta.80",
+    "effect": "4.0.0",
     "prettier": "3.9.6",
     "prettier-plugin-astro": "0.14.1",
+    "typescript": "5.9.3",
+    "vite": "8.0.7",
     "wrangler": "^4.100.0"
   }
 }
