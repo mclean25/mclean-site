@@ -1,7 +1,76 @@
 import { randomBytes } from "node:crypto";
+import { lookup, resolve4 } from "node:dns";
+import { request } from "node:https";
 import { readFile, writeFile, mkdir, readdir, lstat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve, basename, join, extname } from "node:path";
+
+function upload(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const connection = request(
+      url,
+      {
+        method: "PUT",
+        headers: { ...headers, "Content-Length": Buffer.byteLength(body) },
+        signal: AbortSignal.timeout(120000),
+        lookup(host, options, callback) {
+          lookup(host, options, (error, address, family) => {
+            if (!error || error.code !== "ENOTFOUND") {
+              callback(error, address, family);
+              return;
+            }
+            // Query the configured DNS servers if the system cache fails.
+            resolve4(host, (dnsError, addresses) => {
+              if (dnsError || !addresses?.length) {
+                callback(dnsError ?? error);
+                return;
+              }
+              console.log(
+                "System DNS lookup failed. Using a direct DNS query.",
+              );
+              callback(
+                null,
+                options.all
+                  ? addresses.map((address) => ({ address, family: 4 }))
+                  : addresses[0],
+                4,
+              );
+            });
+          });
+        },
+      },
+      (response) => {
+        const chunks = [];
+        let size = 0;
+        response.on("data", (chunk) => {
+          size += chunk.length;
+          if (size > 65536)
+            response.destroy(new Error("Upload response is too large"));
+          else chunks.push(chunk);
+        });
+        response.on("error", reject);
+        response.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          if (response.statusCode !== 200) {
+            reject(
+              new Error(`Upload failed (${response.statusCode}): ${text}`),
+            );
+            return;
+          }
+          try {
+            resolve(JSON.parse(text));
+          } catch {
+            reject(
+              new Error("The upload service returned an invalid response"),
+            );
+          }
+        });
+      },
+    );
+    connection.on("error", reject);
+    connection.end(body);
+  });
+}
 
 const types = {
   ".html": "text/html",
@@ -122,22 +191,15 @@ async function main() {
   const body = JSON.stringify({ entry, files });
   if (Buffer.byteLength(body) > 16 * 1024 * 1024)
     throw new Error("Upload exceeds 16 MiB");
-  const response = await fetch(`${endpoint}/api/shares/${token}`, {
-    method: "PUT",
-    redirect: "error",
-    signal: AbortSignal.timeout(120000),
-    headers: {
+  const result = await upload(
+    `${endpoint}/api/shares/${token}`,
+    {
       Authorization: `Bearer ${config.uploadToken}`,
       "Content-Type": "application/json",
       ...(!shareUrl ? { "If-None-Match": "*" } : {}),
     },
     body,
-  });
-  if (!response.ok)
-    throw new Error(
-      `Upload failed (${response.status}): ${await response.text()}`,
-    );
-  const result = await response.json();
+  );
   shares[source] = result.url;
   await mkdir(configDir, { recursive: true, mode: 0o700 });
   await writeFile(
@@ -149,6 +211,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error.message);
+  console.error(`${error.message}${error.code ? ` (${error.code})` : ""}`);
   process.exitCode = 1;
 });
