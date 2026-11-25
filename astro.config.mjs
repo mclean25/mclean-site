@@ -9,6 +9,8 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
+	site: "https://mclean.sh",
+
 	devToolbar: {
 		enabled: false,
 	},
@@ -18,9 +20,11 @@ export default defineConfig({
 			"https://acidic-owner-5a8.notion.site/Alex-s-Christmas-List-2025-2a99905e01ff80f584acf711524520af",
 	},
 
+	integrations: [mdx(), sitemap()],
+
 	vite: {
-		plugins: [tailwindcss(), mdx(), sitemap()],
+		plugins: [tailwindcss()],
 	},
 
-	adapter: cloudflare(),
+	adapter: cloudflare({ imageService: "compile" }),
 });

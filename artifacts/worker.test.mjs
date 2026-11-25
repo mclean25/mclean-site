@@ -7,13 +7,31 @@ const require = createRequire(import.meta.url);
 const wranglerRequire = createRequire(require.resolve("wrangler/package.json"));
 const { Miniflare } = wranglerRequire("miniflare");
 const runtime = new Miniflare({
-  modules: true,
-  script: await readFile(new URL("./worker.mjs", import.meta.url), "utf8"),
-  // This is the newest date supported by the installed local runtime.
-  compatibilityDate: "2026-06-18",
-  compatibilityFlags: ["nodejs_compat"],
-  r2Buckets: ["FILES"],
-  bindings: { UPLOAD_TOKEN: "local-test-only" },
+  workers: [
+    {
+      config: {
+        name: "mclean-artifacts",
+        compatibilityDate: "2026-10-03",
+        compatibilityFlags: ["nodejs_compat"],
+        manifest: {
+          mainModule: "worker.mjs",
+          modules: {
+            "worker.mjs": {
+              type: "esm",
+              contents: await readFile(
+                new URL("./worker.mjs", import.meta.url),
+                "utf8",
+              ),
+            },
+          },
+        },
+        env: {
+          FILES: { type: "r2", name: "files" },
+          UPLOAD_TOKEN: { type: "text", value: "local-test-only" },
+        },
+      },
+    },
+  ],
 });
 const token = "a".repeat(64);
 const api = `http://localhost/api/shares/${token}`;
