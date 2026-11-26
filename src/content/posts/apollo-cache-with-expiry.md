@@ -1,5 +1,5 @@
 ---
-slug: "/posts/apollo-cache-with-expiry"
+slug: "apollo-cache-with-expiry"
 pubDate: "Nov 28 2020"
 title: "Apollo Cache with Expiry Hook"
 description: "Creating a React hook to give cache used in Apollo an expiration"

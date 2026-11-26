@@ -1,5 +1,5 @@
 ---
-slug: "/posts/multiple-git-ssh-keys"
+slug: "multiple-git-ssh-keys"
 pubDate: "2020-11-07"
 title: "Multiple Git SSH Keys"
 description: "How to configure using mutliple SSH keys on one machine"

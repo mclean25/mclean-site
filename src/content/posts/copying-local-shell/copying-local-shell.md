@@ -1,5 +1,5 @@
 ---
-slug: "/posts/copying-host-shell-config-to-vscode-devcontainers"
+slug: "copying-host-shell-config-to-vscode-devcontainers"
 pubDate: "2020-10-21"
 title: "Copying Host's Shell Config over to VS Code Dev Container"
 description: "Demonstrating how you can copy over your host's shell config to VS Code's dev containers for use in the integrated terminal"
