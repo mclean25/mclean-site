@@ -1140,7 +1140,7 @@ textarea.input {
       <iframe
         id="artifact-frame"
         src="${escapeHtml(frameUrl)}"
-        sandbox="allow-scripts allow-downloads allow-modals allow-forms"
+        sandbox="allow-scripts allow-downloads allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox"
         referrerpolicy="no-referrer"
         title="${escapeHtml(artifact.title)}"
       ></iframe>
