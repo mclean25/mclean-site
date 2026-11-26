@@ -27,6 +27,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:infra
+      - run: pnpm check:artifacts
+      - run: pnpm lint:artifacts
       - run: pnpm test:artifacts
       - run: pnpm deploy:prod --yes --no-input
         env:
