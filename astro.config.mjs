@@ -18,15 +18,6 @@ export default defineConfig({
 	redirects: {
 		"/christmas-list/2025":
 			"https://acidic-owner-5a8.notion.site/Alex-s-Christmas-List-2025-2a99905e01ff80f584acf711524520af",
-		// Posts used to be served under /posts/posts/<slug> (and linked as
-		// /posts//posts/<slug>); keep those links working.
-		"/posts//posts/multiple-git-ssh-keys": "/posts/multiple-git-ssh-keys",
-		"/posts//posts/apollo-cache-with-expiry": "/posts/apollo-cache-with-expiry",
-		"/posts//posts/copying-host-shell-config-to-vscode-devcontainers": "/posts/copying-host-shell-config-to-vscode-devcontainers",
-		"/posts/posts/multiple-git-ssh-keys": "/posts/multiple-git-ssh-keys",
-		"/posts/posts/apollo-cache-with-expiry": "/posts/apollo-cache-with-expiry",
-		"/posts/posts/copying-host-shell-config-to-vscode-devcontainers":
-			"/posts/copying-host-shell-config-to-vscode-devcontainers",
 	},
 
 	integrations: [mdx(), sitemap()],

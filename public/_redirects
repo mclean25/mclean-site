@@ -1,0 +1,14 @@
+# Posts used to be served under /posts/posts/<slug> and linked as
+# /posts//posts/<slug>; send both to /posts/<slug>.
+/posts/posts/multiple-git-ssh-keys /posts/multiple-git-ssh-keys/ 301
+/posts/posts/multiple-git-ssh-keys/ /posts/multiple-git-ssh-keys/ 301
+/posts//posts/multiple-git-ssh-keys /posts/multiple-git-ssh-keys/ 301
+/posts//posts/multiple-git-ssh-keys/ /posts/multiple-git-ssh-keys/ 301
+/posts/posts/apollo-cache-with-expiry /posts/apollo-cache-with-expiry/ 301
+/posts/posts/apollo-cache-with-expiry/ /posts/apollo-cache-with-expiry/ 301
+/posts//posts/apollo-cache-with-expiry /posts/apollo-cache-with-expiry/ 301
+/posts//posts/apollo-cache-with-expiry/ /posts/apollo-cache-with-expiry/ 301
+/posts/posts/copying-host-shell-config-to-vscode-devcontainers /posts/copying-host-shell-config-to-vscode-devcontainers/ 301
+/posts/posts/copying-host-shell-config-to-vscode-devcontainers/ /posts/copying-host-shell-config-to-vscode-devcontainers/ 301
+/posts//posts/copying-host-shell-config-to-vscode-devcontainers /posts/copying-host-shell-config-to-vscode-devcontainers/ 301
+/posts//posts/copying-host-shell-config-to-vscode-devcontainers/ /posts/copying-host-shell-config-to-vscode-devcontainers/ 301
