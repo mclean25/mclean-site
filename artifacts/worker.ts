@@ -50,7 +50,7 @@ const SHELL_CSP =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 
 const ARTIFACT_CSP =
-  "sandbox allow-scripts allow-downloads allow-modals allow-forms";
+  "sandbox allow-scripts allow-downloads allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox";
 
 function reply(
   body: BodyInit | null,

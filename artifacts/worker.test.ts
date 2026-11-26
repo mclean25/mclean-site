@@ -254,13 +254,13 @@ try {
     assert.match(html, /Demo Report/);
     assert.match(
       html,
-      /sandbox="allow-scripts allow-downloads allow-modals allow-forms"/,
+      /sandbox="allow-scripts allow-downloads allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox"/,
     );
     assert.doesNotMatch(html, /allow-same-origin/);
 
     const frameMatch = html.match(/src="(\/f\/[^"]+\/)"/);
-    assert.ok(frameMatch, "Expected encrypted /f/<frameToken>/ iframe src");
     // Raw link should also use the encrypted frame URL so private multi-file artifacts load assets.
+    assert.ok(frameMatch, "Expected encrypted /f/<frameToken>/ iframe src");
     assert.ok(
       html.includes(`href="${frameMatch[1]}"`),
       "Expected Raw link to point at frameUrl",
@@ -278,7 +278,7 @@ try {
     assert.equal(await frameRes.text(), "<h1>First</h1>");
     assert.equal(
       frameRes.headers.get("Content-Security-Policy"),
-      "sandbox allow-scripts allow-downloads allow-modals allow-forms",
+      "sandbox allow-scripts allow-downloads allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox",
     );
     assert.equal(frameRes.headers.get("Access-Control-Allow-Origin"), "*");
 
@@ -295,7 +295,7 @@ try {
     assert.equal(await rawRes.text(), "<h1>First</h1>");
     assert.equal(
       rawRes.headers.get("Content-Security-Policy"),
-      "sandbox allow-scripts allow-downloads allow-modals allow-forms",
+      "sandbox allow-scripts allow-downloads allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox",
     );
     assert.equal(
       (await runtime.dispatchFetch(`${share}style.css`)).status,
