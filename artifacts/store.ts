@@ -12,8 +12,18 @@ import type {
 const CODE_TTL_MS = 10 * 60 * 1000;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const MAX_CODES_PER_EMAIL = 5;
+const MAX_CODES_PER_IP = 15;
 const MAX_CODES_GLOBAL = 60;
 const MAX_VERIFY_ATTEMPTS = 5;
+
+function cleanSingleLine(value: string, maxLen: number): string {
+  let out = "";
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    out += code <= 0x1f || code === 0x7f ? " " : value[i];
+  }
+  return out.replace(/\s+/g, " ").trim().slice(0, maxLen);
+}
 
 type UserRow = {
   email: string;
@@ -171,6 +181,14 @@ export class Store extends DurableObject<Env> {
         INSERT INTO schema_meta (version) VALUES (1);
       `);
     }
+    if (current < 2) {
+      this.sql.exec(`
+        ALTER TABLE login_codes ADD COLUMN ip_hash TEXT;
+        ALTER TABLE login_codes ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0;
+        CREATE INDEX IF NOT EXISTS idx_login_codes_ip ON login_codes(ip_hash, created_at);
+        INSERT INTO schema_meta (version) VALUES (2);
+      `);
+    }
   }
 
   // --- Users & Auth ---
@@ -205,7 +223,7 @@ export class Store extends DurableObject<Env> {
       )
       .toArray()[0];
     if (existing) {
-      const nextName = name ? name.trim().slice(0, 80) : existing.name;
+      const nextName = name ? cleanSingleLine(name, 80) : existing.name;
       this.sql.exec(
         "UPDATE users SET name = ?, last_seen_at = ? WHERE email = ?",
         nextName,
@@ -216,7 +234,7 @@ export class Store extends DurableObject<Env> {
       this.sql.exec(
         "INSERT INTO users (email, name, created_at, last_seen_at) VALUES (?, ?, ?, ?)",
         normalized,
-        name.trim().slice(0, 80),
+        cleanSingleLine(name, 80),
         now,
         now,
       );
@@ -229,7 +247,7 @@ export class Store extends DurableObject<Env> {
   async updateUserName(email: string, name: string): Promise<StoredUser> {
     await this.ready;
     const normalized = email.toLowerCase();
-    const cleaned = name.trim().slice(0, 80);
+    const cleaned = cleanSingleLine(name, 80);
     const now = Date.now();
     const existing = this.sql
       .exec<{ email: string }>(
@@ -261,12 +279,16 @@ export class Store extends DurableObject<Env> {
   async createLoginCode(
     email: string,
     codeHash: string,
+    options: { ipHash?: string | null; isOwner?: boolean; isTest?: boolean } = {},
   ): Promise<
     | { ok: true; id: string; expiresAt: number }
     | { ok: false; status: number; error: string }
   > {
     await this.ready;
     const normalized = email.toLowerCase();
+    const ipHash = options.ipHash || null;
+    const isOwner = Boolean(options.isOwner);
+    const isTest = Boolean(options.isTest);
     const now = Date.now();
     const windowStart = now - RATE_WINDOW_MS;
 
@@ -291,29 +313,51 @@ export class Store extends DurableObject<Env> {
       };
     }
 
-    const globalCount =
-      this.sql
-        .exec<{ count: number }>(
-          "SELECT COUNT(*) AS count FROM login_codes WHERE created_at >= ?",
-          windowStart,
-        )
-        .toArray()[0]?.count ?? 0;
-    if (globalCount >= MAX_CODES_GLOBAL) {
-      return {
-        ok: false,
-        status: 429,
-        error: "Sign-in is temporarily busy. Please try again shortly.",
-      };
+    if (ipHash && !isOwner) {
+      const perIp =
+        this.sql
+          .exec<{ count: number }>(
+            "SELECT COUNT(*) AS count FROM login_codes WHERE ip_hash = ? AND created_at >= ?",
+            ipHash,
+            windowStart,
+          )
+          .toArray()[0]?.count ?? 0;
+      if (perIp >= MAX_CODES_PER_IP) {
+        return {
+          ok: false,
+          status: 429,
+          error: "Too many sign-in attempts from this network. Please wait a few minutes.",
+        };
+      }
+    }
+
+    if (!isOwner && !isTest) {
+      const globalCount =
+        this.sql
+          .exec<{ count: number }>(
+            "SELECT COUNT(*) AS count FROM login_codes WHERE is_test = 0 AND created_at >= ?",
+            windowStart,
+          )
+          .toArray()[0]?.count ?? 0;
+      if (globalCount >= MAX_CODES_GLOBAL) {
+        return {
+          ok: false,
+          status: 429,
+          error: "Sign-in is temporarily busy. Please try again shortly.",
+        };
+      }
     }
 
     const id = makeId("otp_");
     this.sql.exec(
-      "INSERT INTO login_codes (id, email, code_hash, expires_at, attempts, used_at, created_at) VALUES (?, ?, ?, ?, 0, NULL, ?)",
+      "INSERT INTO login_codes (id, email, code_hash, expires_at, attempts, used_at, created_at, ip_hash, is_test) VALUES (?, ?, ?, ?, 0, NULL, ?, ?, ?)",
       id,
       normalized,
       codeHash,
       now + CODE_TTL_MS,
       now,
+      ipHash,
+      isTest ? 1 : 0,
     );
     return { ok: true, id, expiresAt: now + CODE_TTL_MS };
   }
@@ -434,10 +478,10 @@ export class Store extends DurableObject<Env> {
       )
       .toArray()[0];
 
+    const cleanedTitle =
+      typeof input.title === "string" ? cleanSingleLine(input.title, 140) : "";
     const resolvedTitle =
-      typeof input.title === "string" && input.title.trim()
-        ? input.title.trim().slice(0, 140)
-        : existing?.title || input.entry || "Untitled artifact";
+      cleanedTitle || existing?.title || input.entry || "Untitled artifact";
 
     const resolvedPublic =
       typeof input.publicLink === "boolean"
@@ -599,10 +643,9 @@ export class Store extends DurableObject<Env> {
       .exec<ArtifactRow>("SELECT * FROM artifacts WHERE token = ?", token)
       .toArray()[0];
     if (!existing) return null;
-    const title =
-      typeof patch.title === "string" && patch.title.trim()
-        ? patch.title.trim().slice(0, 140)
-        : existing.title;
+    const cleanedTitle =
+      typeof patch.title === "string" ? cleanSingleLine(patch.title, 140) : "";
+    const title = cleanedTitle || existing.title;
     const publicLink =
       typeof patch.publicLink === "boolean"
         ? patch.publicLink
@@ -826,34 +869,31 @@ export class Store extends DurableObject<Env> {
     let px: number | null = null;
     let py: number | null = null;
     let pLabel: string | null = null;
-    if (
-      !resolvedParentId &&
-      input.pinX !== null &&
-      input.pinX !== undefined &&
-      input.pinY !== null &&
-      input.pinY !== undefined
-    ) {
-      const nx = Number(input.pinX);
-      const ny = Number(input.pinY);
+    const hasPin =
+      (input.pinX !== null && input.pinX !== undefined) ||
+      (input.pinY !== null && input.pinY !== undefined);
+    if (!resolvedParentId && hasPin) {
       if (
-        !Number.isFinite(nx) ||
-        !Number.isFinite(ny) ||
-        nx < 0 ||
-        nx > 1 ||
-        ny < 0 ||
-        ny > 1
+        typeof input.pinX !== "number" ||
+        typeof input.pinY !== "number" ||
+        !Number.isFinite(input.pinX) ||
+        !Number.isFinite(input.pinY) ||
+        input.pinX < 0 ||
+        input.pinX > 1 ||
+        input.pinY < 0 ||
+        input.pinY > 1
       ) {
         return {
           ok: false,
           status: 400,
-          error: "Pin coordinates must be between 0 and 1.",
+          error: "Pin coordinates must be numbers between 0 and 1.",
         };
       }
-      px = Math.round(nx * 10000) / 10000;
-      py = Math.round(ny * 10000) / 10000;
+      px = Math.round(input.pinX * 10000) / 10000;
+      py = Math.round(input.pinY * 10000) / 10000;
       pLabel =
         typeof input.pinLabel === "string" && input.pinLabel.trim()
-          ? input.pinLabel.trim().slice(0, 120)
+          ? cleanSingleLine(input.pinLabel, 120)
           : null;
     }
 

@@ -63,7 +63,7 @@ export interface CommentRecord {
   id: string;
   token: string;
   parentId: string | null;
-  authorEmail: string;
+  authorEmail?: string;
   authorName: string;
   authorKind: "user" | "agent";
   body: string;
@@ -72,7 +72,8 @@ export interface CommentRecord {
   pinLabel: string | null;
   pinNumber: number | null;
   resolvedAt: number | null;
-  resolvedBy: string | null;
+  resolvedBy?: string | null;
+  canDelete?: boolean;
   createdAt: number;
   updatedAt: number;
 }

@@ -3,8 +3,11 @@ import {
   SESSION_TTL,
   buildClearSessionCookie,
   buildSessionCookie,
+  decryptFrameToken,
+  encryptFrameToken,
   generateOtpCode,
   getSessionSecret,
+  hashClientIp,
   hashOtpCode,
   isBearerAuthorized,
   isOwnerEmail,
@@ -13,13 +16,13 @@ import {
   readSession,
   signToken,
   verifySameOrigin,
-  verifyToken,
 } from "./auth.ts";
-import { sendLoginCode, sendShareInvite } from "./mail.ts";
+import { isTestAddress, sendLoginCode, sendShareInvite } from "./mail.ts";
 import type { Store } from "./store.ts";
 import type {
   ArtifactBundle,
   ArtifactRecord,
+  CommentRecord,
   Env,
   ViewerUser,
 } from "./types.ts";
@@ -242,6 +245,7 @@ function serveBundleFile(
   request: Request,
   bundle: ArtifactBundle,
   rawSubpath: string,
+  allowCors = false,
 ): Response {
   let path: string;
   try {
@@ -260,13 +264,53 @@ function serveBundleFile(
     "Content-Length": String(data.byteLength),
     // Artifact scripts run in an opaque origin and cannot access cookies or shell state.
     "Content-Security-Policy": ARTIFACT_CSP,
+    ...(allowCors ? { "Access-Control-Allow-Origin": "*" } : {}),
   });
+}
+
+function sanitizeCommentForViewer(
+  comment: CommentRecord,
+  user: ViewerUser | null,
+  bearer: boolean,
+): CommentRecord {
+  const canDelete = Boolean(
+    bearer ||
+      user?.isOwner ||
+      (user && comment.authorEmail && user.email === comment.authorEmail),
+  );
+  if (bearer || user?.isOwner) {
+    return { ...comment, canDelete };
+  }
+  const { authorEmail: _email, resolvedBy: _resolvedBy, ...publicFields } =
+    comment;
+  return { ...publicFields, canDelete };
+}
+
+function sanitizeCommentsForViewer(
+  comments: CommentRecord[],
+  user: ViewerUser | null,
+  bearer: boolean,
+): CommentRecord[] {
+  return comments.map((c) => sanitizeCommentForViewer(c, user, bearer));
 }
 
 function safeNext(next: string | null): string {
   if (typeof next !== "string") return "/";
-  if (!next.startsWith("/") || next.startsWith("//")) return "/";
-  return next;
+  if (
+    !next.startsWith("/") ||
+    next.startsWith("//") ||
+    next.includes("\\") ||
+    hasControlChar(next)
+  ) {
+    return "/";
+  }
+  try {
+    const parsed = new URL(next, "https://artifacts.invalid");
+    if (parsed.origin !== "https://artifacts.invalid") return "/";
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
 }
 
 async function handle(request: Request, env: Env): Promise<Response> {
@@ -303,8 +347,10 @@ async function handle(request: Request, env: Env): Promise<Response> {
       } catch {
         return jsonReply({ error: "Invalid JSON" }, 400);
       }
-      const name = typeof body.name === "string" ? body.name : "";
-      const updated = await store.updateUserName(user.email, name);
+      if (typeof body.name !== "string") {
+        return jsonReply({ error: "Name must be a string." }, 400);
+      }
+      const updated = await store.updateUserName(user.email, body.name);
       return jsonReply({
         user: {
           email: updated.email,
@@ -330,7 +376,11 @@ async function handle(request: Request, env: Env): Promise<Response> {
     const code = generateOtpCode();
     const secret = getSessionSecret(env);
     const codeHash = hashOtpCode(secret, email, code);
-    const created = await store.createLoginCode(email, codeHash);
+    const created = await store.createLoginCode(email, codeHash, {
+      ipHash: hashClientIp(request, secret),
+      isOwner: isOwnerEmail(email, env),
+      isTest: isTestAddress(email),
+    });
     if (!created.ok) {
       return jsonReply({ error: created.error }, created.status);
     }
@@ -432,6 +482,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     }
 
     // Store only the clean static bundle in R2.
+    const existedBefore = Boolean(await store.getArtifact(token));
     const r2Body = JSON.stringify({
       entry: bundle.entry,
       files: bundle.files,
@@ -445,23 +496,36 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (!object) return reply("Share already exists", 409);
 
     const ownerEmail = primaryOwnerEmail(env);
-    const { artifact, newlyAddedShares } = await store.upsertArtifact({
-      token,
-      title: typeof bundle.title === "string" ? bundle.title : undefined,
-      entry: bundle.entry,
-      publicLink:
-        typeof bundle.publicLink === "boolean" ? bundle.publicLink : undefined,
-      fileCount,
-      totalBytes,
-      shares: shareEmails,
-      invitedBy: ownerEmail,
-    });
+    let artifact: ArtifactRecord;
+    let newlyAddedShares: string[];
+    try {
+      const upserted = await store.upsertArtifact({
+        token,
+        title: typeof bundle.title === "string" ? bundle.title : undefined,
+        entry: bundle.entry,
+        publicLink:
+          typeof bundle.publicLink === "boolean"
+            ? bundle.publicLink
+            : undefined,
+        fileCount,
+        totalBytes,
+        shares: shareEmails,
+        invitedBy: ownerEmail,
+      });
+      artifact = upserted.artifact;
+      newlyAddedShares = upserted.newlyAddedShares;
+    } catch (error) {
+      if (!existedBefore) {
+        await env.FILES.delete(key).catch(() => {});
+      }
+      throw error;
+    }
 
     const shareUrl = `${url.origin}/s/${token}/`;
     if (newlyAddedShares.length && bundle.notify !== false) {
       const ownerProfile = await store.getUser(ownerEmail);
       const sharedBy = ownerProfile?.name || "Alex";
-      await Promise.allSettled(
+      const outcomes = await Promise.allSettled(
         newlyAddedShares.map((to) =>
           sendShareInvite(
             env,
@@ -471,6 +535,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
           ),
         ),
       );
+      if (outcomes.some((o) => o.status === "rejected")) {
+        console.error(JSON.stringify({ event: "share_invite_email_failed" }));
+      }
     }
 
     return jsonReply({ url: shareUrl, artifact }, 200);
@@ -504,7 +571,11 @@ async function handle(request: Request, env: Env): Promise<Response> {
           user ? 403 : 401,
         );
       }
-      const comments = await store.listComments(token);
+      const comments = sanitizeCommentsForViewer(
+        await store.listComments(token),
+        user,
+        bearer,
+      );
       const shares =
         bearer || user?.isOwner ? await store.listShares(token) : undefined;
       return jsonReply({ artifact, comments, ...(shares ? { shares } : {}) });
@@ -615,7 +686,13 @@ async function handle(request: Request, env: Env): Promise<Response> {
     }
 
     if (method === "GET" && !commentId) {
-      return jsonReply({ comments: await store.listComments(token) });
+      return jsonReply({
+        comments: sanitizeCommentsForViewer(
+          await store.listComments(token),
+          user,
+          bearer,
+        ),
+      });
     }
 
     if (method === "POST" && !commentId) {
@@ -647,7 +724,10 @@ async function handle(request: Request, env: Env): Promise<Response> {
         return jsonReply({ error: created.error }, created.status);
       }
       return jsonReply(
-        { comment: created.comment, comments: created.comments },
+        {
+          comment: sanitizeCommentForViewer(created.comment, user, bearer),
+          comments: sanitizeCommentsForViewer(created.comments, user, bearer),
+        },
         201,
       );
     }
@@ -680,8 +760,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
         return jsonReply({ error: updated.error }, updated.status);
       }
       return jsonReply({
-        comment: updated.comment,
-        comments: updated.comments,
+        comment: sanitizeCommentForViewer(updated.comment, user, bearer),
+        comments: sanitizeCommentsForViewer(updated.comments, user, bearer),
       });
     }
 
@@ -698,7 +778,10 @@ async function handle(request: Request, env: Env): Promise<Response> {
       if (!deleted.ok) {
         return jsonReply({ error: deleted.error }, deleted.status);
       }
-      return jsonReply({ ok: true, comments: deleted.comments });
+      return jsonReply({
+        ok: true,
+        comments: sanitizeCommentsForViewer(deleted.comments, user, bearer),
+      });
     }
 
     return reply("Method not allowed", 405);
@@ -716,16 +799,11 @@ async function handle(request: Request, env: Env): Promise<Response> {
     /^\/f\/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)(\/.*)?$/,
   );
   if (frameMatch) {
-    const payload = await verifyToken<{ token?: unknown; email?: unknown }>(
+    const payload = await decryptFrameToken(
       getSessionSecret(env),
-      "frame",
       frameMatch[1],
     );
-    if (
-      !payload ||
-      typeof payload.token !== "string" ||
-      !TOKEN_RE.test(payload.token)
-    ) {
+    if (!payload || !TOKEN_RE.test(payload.token)) {
       return reply("Not found", 404);
     }
     if (!frameMatch[2]) {
@@ -733,17 +811,16 @@ async function handle(request: Request, env: Env): Promise<Response> {
     }
     const artifact = await ensureArtifact(payload.token, env, store);
     if (!artifact) return reply("Not found", 404);
-    const frameUser =
-      typeof payload.email === "string" && payload.email
-        ? { email: payload.email, isOwner: isOwnerEmail(payload.email, env) }
-        : null;
+    const frameUser = payload.email
+      ? { email: payload.email, isOwner: isOwnerEmail(payload.email, env) }
+      : null;
     if (!(await canViewArtifact(artifact, frameUser, false, store))) {
       return reply("Forbidden", 403);
     }
     const object = await env.FILES.get(`shares/${payload.token}`);
     if (!object) return reply("Not found", 404);
     const bundle = await object.json<ArtifactBundle>();
-    return serveBundleFile(request, bundle, frameMatch[2].slice(1));
+    return serveBundleFile(request, bundle, frameMatch[2].slice(1), true);
   }
 
   // --- Dashboard & Login Pages ---
@@ -818,17 +895,19 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return serveBundleFile(request, bundle, subpath);
   }
 
-  // Viewer shell page: mint a short-lived signed frame token so the sandboxed
+  // Viewer shell page: mint a short-lived encrypted frame token so the sandboxed
   // opaque-origin iframe can load the entry document and all relative assets
-  // without cookies.
-  const frameToken = await signToken(
-    getSessionSecret(env),
-    "frame",
-    FRAME_TTL,
-    { token, email: user?.email || null },
+  // without cookies and without exposing viewer email or share token to artifact JS.
+  const frameToken = await encryptFrameToken(getSessionSecret(env), FRAME_TTL, {
+    token,
+    email: user?.email || (bearer ? primaryOwnerEmail(env) : null),
+  });
+  const comments = sanitizeCommentsForViewer(
+    await store.listComments(token),
+    user,
+    bearer,
   );
-  const comments = await store.listComments(token);
-  const shares = user?.isOwner ? await store.listShares(token) : [];
+  const shares = bearer || user?.isOwner ? await store.listShares(token) : [];
   return htmlReply(
     renderViewerPage({
       artifact,

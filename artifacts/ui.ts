@@ -404,7 +404,13 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Verification failed");
-      const next = typeof boot.next === "string" && boot.next.startsWith("/") && !boot.next.startsWith("//") ? boot.next : "/";
+      let next = "/";
+      if (typeof boot.next === "string" && boot.next.startsWith("/") && !boot.next.startsWith("//") && !boot.next.includes("\\\\")) {
+        try {
+          const parsed = new URL(boot.next, location.origin);
+          if (parsed.origin === location.origin) next = parsed.pathname + parsed.search + parsed.hash;
+        } catch {}
+      }
       location.href = next;
     } catch (err) {
       showErr(err.message);
@@ -1120,7 +1126,7 @@ textarea.input {
       <button id="pin-mode-btn" class="btn btn-sm" type="button" title="Drop a pinned comment (C)">Pin</button>
       <button id="pins-vis-btn" class="btn btn-sm btn-ghost hidden" type="button" title="Show or hide pins">Hide pins</button>
       <button id="comments-btn" class="btn btn-sm" type="button">Comments <span id="open-count" class="pill" style="margin-left:2px">0</span></button>
-      <a class="btn btn-sm btn-ghost" href="/s/${escapeHtml(artifact.token)}/?raw=1" target="_blank" rel="noopener" title="Open raw artifact">Raw ↗</a>
+      <a class="btn btn-sm btn-ghost" href="${escapeHtml(frameUrl)}" target="_blank" rel="noopener" title="Open raw artifact">Raw ↗</a>
       ${
         user
           ? `<button id="user-btn" class="btn btn-sm btn-ghost" type="button">${escapeHtml(user.name || user.email)}</button>`
@@ -1381,7 +1387,7 @@ textarea.input {
         btn.style.left = (c.pinX * 100) + "%";
         btn.style.top = (c.pinY * 100) + "%";
         btn.textContent = String(c.pinNumber);
-        btn.title = (c.authorName || c.authorEmail) + ": " + c.body.slice(0, 80);
+        btn.title = (c.authorName || "Viewer") + ": " + c.body.slice(0, 80);
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           activeThreadId = c.id;
@@ -1455,7 +1461,7 @@ textarea.input {
 
       const name = document.createElement("span");
       name.className = "author-name";
-      name.textContent = root.authorName || root.authorEmail;
+      name.textContent = root.authorName || "Viewer";
       authorRow.appendChild(name);
 
       if (root.authorKind === "agent") {
@@ -1491,7 +1497,7 @@ textarea.input {
           const rName = document.createElement("span");
           rName.className = "author-name";
           rName.style.fontSize = "12px";
-          rName.textContent = r.authorName || r.authorEmail;
+          rName.textContent = r.authorName || "Viewer";
           rHead.appendChild(rName);
 
           if (r.authorKind === "agent") {
@@ -1506,7 +1512,7 @@ textarea.input {
           rTs.textContent = relTime(r.createdAt);
           rHead.appendChild(rTs);
 
-          if (user && (user.isOwner || user.email === r.authorEmail)) {
+          if (r.canDelete) {
             const del = document.createElement("button");
             del.type = "button";
             del.className = "btn btn-ghost btn-sm";
@@ -1543,7 +1549,7 @@ textarea.input {
         resolveBtn.addEventListener("click", () => toggleResolve(root.id, !root.resolvedAt));
         actions.appendChild(resolveBtn);
 
-        if (user.isOwner || user.email === root.authorEmail) {
+        if (root.canDelete) {
           const delBtn = document.createElement("button");
           delBtn.type = "button";
           delBtn.className = "btn btn-danger btn-sm";

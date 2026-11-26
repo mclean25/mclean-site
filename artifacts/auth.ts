@@ -1,11 +1,13 @@
 import {
   createHash,
+  randomInt,
   timingSafeEqual as nodeTimingSafeEqual,
 } from "node:crypto";
 import type { Env } from "./types.ts";
 
 const enc = new TextEncoder();
 const keyCache = new Map<string, Promise<CryptoKey>>();
+const aesKeyCache = new Map<string, Promise<CryptoKey>>();
 
 export const SESSION_TTL = 30 * 24 * 3600;
 export const FRAME_TTL = 2 * 3600;
@@ -227,10 +229,100 @@ export function verifySameOrigin(request: Request): boolean {
   return true;
 }
 
+function aesKey(secret: string): Promise<CryptoKey> {
+  let key = aesKeyCache.get(secret);
+  if (!key) {
+    const raw = createHash("sha256")
+      .update(`frame-aes:${secret}`)
+      .digest();
+    key = crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, [
+      "encrypt",
+      "decrypt",
+    ]);
+    aesKeyCache.set(secret, key);
+  }
+  return key;
+}
+
+export async function encryptFrameToken(
+  secret: string,
+  ttlSeconds: number,
+  data: { token: string; email: string | null },
+): Promise<string> {
+  const payload = {
+    ...data,
+    k: "frame" as const,
+    exp: Math.floor(Date.now() / 1000) + ttlSeconds,
+  };
+  const iv = new Uint8Array(12);
+  crypto.getRandomValues(iv);
+  const cipher = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      await aesKey(secret),
+      enc.encode(JSON.stringify(payload)),
+    ),
+  );
+  return `${b64url(iv)}.${b64url(cipher)}`;
+}
+
+export async function decryptFrameToken(
+  secret: string,
+  token: string | null | undefined,
+): Promise<{ token: string; email: string | null; exp: number } | null> {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [ivStr, cipherStr] = parts;
+  if (!ivStr || !cipherStr) return null;
+  let plain: ArrayBuffer;
+  try {
+    const iv = fromB64url(ivStr);
+    if (iv.byteLength !== 12) return null;
+    plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      await aesKey(secret),
+      fromB64url(cipherStr),
+    );
+  } catch {
+    return null;
+  }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(new TextDecoder().decode(plain));
+  } catch {
+    return null;
+  }
+  if (!payload || typeof payload !== "object") return null;
+  const p = payload as {
+    k?: unknown;
+    token?: unknown;
+    email?: unknown;
+    exp?: unknown;
+  };
+  if (
+    p.k !== "frame" ||
+    typeof p.token !== "string" ||
+    (p.email !== null && typeof p.email !== "string") ||
+    typeof p.exp !== "number" ||
+    p.exp < Math.floor(Date.now() / 1000)
+  ) {
+    return null;
+  }
+  return { token: p.token, email: p.email, exp: p.exp };
+}
+
+export function hashClientIp(request: Request, secret: string): string | null {
+  const ip =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    null;
+  if (!ip) return null;
+  return createHash("sha256").update(`ip:${secret}:${ip}`).digest("hex");
+}
+
 export function generateOtpCode(): string {
-  const bytes = new Uint32Array(1);
-  crypto.getRandomValues(bytes);
-  return String(bytes[0] % 100_000_000).padStart(8, "0");
+  return String(randomInt(0, 100_000_000)).padStart(8, "0");
 }
 
 export function hashOtpCode(

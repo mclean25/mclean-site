@@ -259,7 +259,18 @@ try {
     assert.doesNotMatch(html, /allow-same-origin/);
 
     const frameMatch = html.match(/src="(\/f\/[^"]+\/)"/);
-    assert.ok(frameMatch, "Expected signed /f/<frameToken>/ iframe src");
+    assert.ok(frameMatch, "Expected encrypted /f/<frameToken>/ iframe src");
+    // Raw link should also use the encrypted frame URL so private multi-file artifacts load assets.
+    assert.ok(
+      html.includes(`href="${frameMatch[1]}"`),
+      "Expected Raw link to point at frameUrl",
+    );
+    // Frame token must be opaque/encrypted (not plaintext base64 JSON with token/email).
+    const rawFrameToken = frameMatch[1].slice(3, -1);
+    assert.doesNotMatch(
+      Buffer.from(rawFrameToken.split(".")[1] || "", "base64url").toString("utf8"),
+      new RegExp(token),
+    );
     const frameUrl = `http://localhost${frameMatch[1]}`;
 
     const frameRes = await runtime.dispatchFetch(frameUrl);
@@ -269,9 +280,11 @@ try {
       frameRes.headers.get("Content-Security-Policy"),
       "sandbox allow-scripts allow-downloads allow-modals allow-forms",
     );
+    assert.equal(frameRes.headers.get("Access-Control-Allow-Origin"), "*");
 
     const cssRes = await runtime.dispatchFetch(`${frameUrl}style.css`);
     assert.equal(cssRes.status, 200);
+    assert.equal(cssRes.headers.get("Access-Control-Allow-Origin"), "*");
     assert.equal(await cssRes.text(), "body{color:black}");
   }
 
@@ -445,10 +458,32 @@ try {
     assert.equal(limited.status, 429);
   }
 
-  // 5. Sign in as owner, update profile name, view dashboard.
+  // 5. Sign in as owner, update profile name, view dashboard, verify open-redirect protection.
   const owner = await signInAs("alex@mclean.sh");
   assert.equal(owner.data.user.isOwner, true);
   {
+    // Open redirect payloads normalize to "/".
+    for (const badNext of ["/%5Cevil.com", "/%09/evil.com", "//evil.com"]) {
+      const redir = await runtime.dispatchFetch(
+        `http://localhost/login?next=${badNext}`,
+        { headers: { Cookie: owner.cookie }, redirect: "manual" },
+      );
+      assert.equal(redir.status, 302);
+      assert.equal(redir.headers.get("Location"), "/");
+    }
+
+    // PATCH /api/me rejects missing/non-string name.
+    const badMe = await runtime.dispatchFetch("http://localhost/api/me", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: owner.cookie,
+        Origin: "http://localhost",
+      },
+      body: JSON.stringify({}),
+    });
+    assert.equal(badMe.status, 400);
+
     const patchMe = await runtime.dispatchFetch("http://localhost/api/me", {
       method: "PATCH",
       headers: {
@@ -587,7 +622,22 @@ try {
     );
     assert.equal(frameRes.status, 200);
 
-    // 7. Comments, Pinned comments, Replies, Resolve, Delete, and Agent API.
+    // 7. Comments, Pinned comments, Replies, Resolve, Delete, email redaction, and Agent API.
+    // Non-numeric pin coordinates are rejected.
+    const badPin = await runtime.dispatchFetch(
+      `http://localhost/api/artifacts/${token}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: guest.cookie,
+          Origin: "http://localhost",
+        },
+        body: JSON.stringify({ body: "Bad pin", pinX: "", pinY: false }),
+      },
+    );
+    assert.equal(badPin.status, 400);
+
     const pinRes = await runtime.dispatchFetch(
       `http://localhost/api/artifacts/${token}/comments`,
       {
@@ -607,11 +657,20 @@ try {
     );
     assert.equal(pinRes.status, 201);
     const pinData = (await pinRes.json()) as {
-      comment: { id: string; pinNumber: number; pinX: number; pinY: number };
+      comment: {
+        id: string;
+        pinNumber: number;
+        pinX: number;
+        pinY: number;
+        authorEmail?: string;
+        canDelete?: boolean;
+      };
     };
     assert.equal(pinData.comment.pinNumber, 1);
     assert.equal(pinData.comment.pinX, 0.42);
     assert.equal(pinData.comment.pinY, 0.31);
+    assert.equal(pinData.comment.authorEmail, undefined, "Guest response should not expose emails");
+    assert.equal(pinData.comment.canDelete, true);
     const threadId = pinData.comment.id;
 
     // Agent replies via Bearer token and resolves thread.
@@ -631,10 +690,36 @@ try {
     );
     assert.equal(agentReply.status, 201);
     const replyData = (await agentReply.json()) as {
-      comment: { id: string; authorKind: string; parentId: string };
+      comment: { id: string; authorKind: string; parentId: string; authorEmail?: string };
     };
     assert.equal(replyData.comment.authorKind, "agent");
     assert.equal(replyData.comment.parentId, threadId);
+    assert.equal(replyData.comment.authorEmail, "alex@mclean.sh");
+
+    // Guest reading comments sees canDelete=false on agent reply and no authorEmail/resolvedBy.
+    const guestCommentsRes = await runtime.dispatchFetch(
+      `http://localhost/api/artifacts/${token}/comments`,
+      { headers: { Cookie: guest.cookie } },
+    );
+    assert.equal(guestCommentsRes.status, 200);
+    const guestComments = (
+      (await guestCommentsRes.json()) as {
+        comments: Array<{ id: string; authorEmail?: string; canDelete?: boolean }>;
+      }
+    ).comments;
+    const guestReplyView = guestComments.find((c) => c.id === replyData.comment.id);
+    assert.equal(guestReplyView?.authorEmail, undefined);
+    assert.equal(guestReplyView?.canDelete, false);
+
+    // Bearer GET /s/:token/ on private artifact mints a usable frameToken.
+    const bearerView = await runtime.dispatchFetch(share, { headers: bearerAuth });
+    assert.equal(bearerView.status, 200);
+    const bearerFrameMatch = (await bearerView.text()).match(/src="(\/f\/[^"]+\/)"/);
+    assert.ok(bearerFrameMatch);
+    assert.equal(
+      (await runtime.dispatchFetch(`http://localhost${bearerFrameMatch[1]}`)).status,
+      200,
+    );
 
     // Guest cannot delete agent/owner's reply.
     const forbiddenDel = await runtime.dispatchFetch(
@@ -681,7 +766,55 @@ try {
     );
   }
 
-  // 8. Delete artifact removes both R2 content and Store metadata.
+  // 8. Per-IP OTP rate limit does not lock out the owner.
+  {
+    const attackerIp = "203.0.113.42";
+    for (let i = 0; i < 15; i++) {
+      const r = await runtime.dispatchFetch(
+        "http://localhost/api/auth/request-code",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: "http://localhost",
+            "CF-Connecting-IP": attackerIp,
+          },
+          body: JSON.stringify({ email: `flood${i}@example.test` }),
+        },
+      );
+      assert.equal(r.status, 200);
+    }
+    const ipBlocked = await runtime.dispatchFetch(
+      "http://localhost/api/auth/request-code",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost",
+          "CF-Connecting-IP": attackerIp,
+        },
+        body: JSON.stringify({ email: "flood16@example.test" }),
+      },
+    );
+    assert.equal(ipBlocked.status, 429);
+
+    // Owner can still request a sign-in code even from the same IP.
+    const ownerStillAllowed = await runtime.dispatchFetch(
+      "http://localhost/api/auth/request-code",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost",
+          "CF-Connecting-IP": attackerIp,
+        },
+        body: JSON.stringify({ email: "alex@mclean.sh" }),
+      },
+    );
+    assert.equal(ownerStillAllowed.status, 200);
+  }
+
+  // 9. Delete artifact removes both R2 content and Store metadata.
   assert.equal(
     (await runtime.dispatchFetch(api, { method: "DELETE", headers: bearerAuth }))
       .status,

@@ -29,6 +29,7 @@ export default Alchemy.Stack(
     yield* Cloudflare.Email.SendingSubdomain("Mail", {
       zoneId: zone.id,
       name: mailHost,
+      previewEnabled: false,
     }).pipe(retain(production));
     const mailFrom = `sign-in@${mailHost}`;
 

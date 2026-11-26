@@ -238,6 +238,21 @@ async function main() {
   if (!config.uploadToken) throw new Error("The upload credential is missing");
   const authHeaders = { Authorization: `Bearer ${config.uploadToken}` };
 
+  const hasManagementOnlyFlags =
+    commentsMode ||
+    deleteMode ||
+    commentText !== null ||
+    replyTarget !== null ||
+    resolveId !== null ||
+    reopenId !== null ||
+    unshareEmails.length > 0;
+
+  if (sourceArg && (listMode || hasManagementOnlyFlags)) {
+    throw new Error(
+      "Cannot combine a file/folder upload with --list, --comments, --comment, --reply, --resolve, --reopen, --unshare, or --delete. Run those separately with --url.",
+    );
+  }
+
   // --- List artifacts ---
   if (listMode) {
     const data = await apiRequest("GET", `${ENDPOINT}/api/artifacts`, authHeaders);
@@ -258,14 +273,8 @@ async function main() {
   // --- Management actions on an existing share URL without file upload ---
   const managementOnly =
     !sourceArg &&
-    (commentsMode ||
-      deleteMode ||
-      commentText !== null ||
-      replyTarget !== null ||
-      resolveId !== null ||
-      reopenId !== null ||
+    (hasManagementOnlyFlags ||
       shareEmails.length > 0 ||
-      unshareEmails.length > 0 ||
       title !== null ||
       publicLink !== null);
 

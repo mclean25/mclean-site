@@ -83,6 +83,15 @@ ${escapeHtml(input.footer)}
 </html>`;
 }
 
+function cleanSubject(str: string): string {
+  let out = "";
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    out += code <= 0x1f || code === 0x7f ? " " : str[i];
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
 async function deliver(
   env: Env,
   to: string,
@@ -99,6 +108,7 @@ async function deliver(
     },
     to,
     ...message,
+    subject: cleanSubject(message.subject),
   });
   return { skipped: false };
 }
